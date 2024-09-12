@@ -1,0 +1,255 @@
+***Implementare imagine:***
+      Structura Image are drept componenete antetul: tipul(un string: "P6"),
+     inaltime(h) si latimea(w) si valoarea maxima a culorii(max), si imaginea
+     propriu-zisa, o matrice alocata dinamic de elemente de tipul Pixel.
+      Elementele Pixel sunt reprezentate de 3 unsigned charuri, R G si B(rosu,
+     verde si albastru).
+      Functii specifice imagini:
+          Image free_image(Image img):
+                Elibereaza elementele imaginii.
+                Returneaza adresa imaginii.
+          Image read_ppm(FILE *in):
+                Citeste antetul imaginii folosind scanf si fseek pentru a sarii
+               peste caracterele albe.
+                Aloca memorie si citeste o imagine de dimensiunile date.
+          Pixel avarege_RGB(Image img, int x, int y, int size)
+                Returneaza culoarea medie(valori de tip char) ale portiunii ce
+               incepe din coltul stanga sus de coordonate (x,y) si cu latura
+               de marimea size.
+          int mean(Image img, int x, int y, int size, Pixel col)
+                Returneaza scorul similaritatii urmand formula.
+          void fill_area(Image *img, int x, int y, int size, Pixel color)
+                Umple portiunea din img a carui colt stanga sus este (x,y) si
+               care are latura de lungime size folosind culoarea din
+               parametrul color.
+          void print_ppm(Image img, FILE *out)
+                Construieste in fisierul binar dat ca argument o imagine ppm
+               cu datele din variabila img.
+
+***Implementare coada:***
+      Pentru a putea implementa algoritmul de parcurge BFS a arborilor, este
+     nevoie de o coada.
+      Ea este implementata ca o lista simplu inlantuita si contine o variabila
+     elem de tip Tree si pointer spre urmatorul element.
+      Inceputul si sfarsitul cozii sunt tinute intr-o alta structura numita
+     Coada.
+      Functii specifice cozii:
+          Coada initQueue()
+               Returneaza o coada initializata(cu rear si front nule).
+          Coada enqueue(Coada que, Tree elem)
+               Adauga elementul elem la finalul cozii.
+          Tree dequeue(Coada *que)
+                Elimina primul element din coada si returneaza continutul
+               acestuia(elem).
+      O functie de eliberare a cozii nu este necesara deoarece algoritmul BFS
+     se opreste doar cand coada este goala.
+
+
+***Implementare arbore cuaternar:***
+      Arborele cuaternar este reprezentat in program ca o lista simplu
+     inlantuita avnd ca elemente un element Pixel ce reprezinta culoarea
+     blocului, type(este 0 daca este nod intern si 1 daca este frunza)
+     si 4 pointerii spre fii nodului.
+      Functii specifice arborelui:
+          Tree InitTree()
+                Returneaza un nod alocat dinamic care are fii nuli.
+          int isLeaf(Tree quad)
+                Returneaza 1 daca nodul este frunza si 0 altfel(verifica
+               daca primul fiu este null).
+          int height(Tree quad)
+                Returneaza inaltimea(numarul de noduri) a arborelui.
+                Daca nodul curent nu este frunza, atunci apeleaza functia
+               pentru fii sai si returneaza inaltimea maxima a acestora + 1
+               (el insusi), iar daca este funza, returneaza 1.
+          int leaf_number(Tree quad)
+                Returneaza numarul de frunze al arborelui.
+                Pentru nodul curent, daca este frunza returneaza 1,
+               altfel returneaza suma apeurilor fiecaruia dintre fii acestuia.
+          int closest_leaf(Tree quad)
+                Returneaza numarul de noduri de la radacina la cea mai
+               apropiata frunza.
+                Functioneaza asemanator cu functia de height, doar ca in loc de
+               a calcula maximul dintre fii, calculeaza minimul, apeland
+               closest_leaf pe fiecare fiu.
+          Tree free_tree(Tree quad)
+                Functie pentru eliberarea memoriei a arborelui.
+                Prima oara, se apeleaza functia pentru fii nodului curent,
+               apoi se elibereaza memoria pentru nodul curent.
+          void BFS_print(Tree comp, FILE *out)
+                Functia foloseste algoritmul de parcurgere BFS al arborilor
+               pentru a afisa noduriele pe linii.
+                Algoritmul porneste de la radacina, pe care  afiseaza, apoi ii
+               adauga fii in coada visited si ii afiseaza, apoi ia primul
+               element si repetea procesul pana cand lista e goala.
+          Tree BFS_read(FILE *in)
+                Functia foloseste algoritmul de parcurgere BFS pentru a citii
+               elementele din fisierul de input.
+                Prima oara citeste radacina si daca este de tipul 0(este nod
+               intern) ii initializeaza si ii citeste fii, daca fii sunt de
+               tipul 0 sunt adaugati in lista needson. Daca este de tipul 1,
+               se afiseaza si culoarea. Dupa se extrage un element nou din
+               needson si se repeta pana cand coada este goala.
+               
+***Functii de conversie arbore-imagine si vice-versa:***
+     Tree compression_tree(Image img, int x, int y, int size, int tol)
+           Functia returneaza un aborele de conpresie corespunzator portiuni
+          din imagine cu coltul stanga sus de coordonate (x,y) si cu latura
+          de lungime size.
+           Daca size este 1, nodul din arbore va primi culoarea pixelului(x,y)
+          si va defveni de tip 1. Altfel, se apeleaza col = avarage_RGB(..) si
+          culoarea rezultata se pune in mean(..), daca rezultatul functiei este
+          mai mic decat toleranta(tol), culoarea nodului va deveni col si va fi
+          de tipul 1, altfel e va apela functia de compresie pentru fiecare fiu
+          al nodului, fiecare avand un sfert din potiune.
+           Functia are o alta functie cu rolul de a o apela:
+           Tree compress(Image img, int tol)
+     void reconstruct_image(Image *img, Tree comp, int lenght, int x, int y)
+           Functia are rolul de a reconstrui imaginea pornind de la
+          arborele de compresie dat.
+           Daca tipul nodului din radacina este 1, se apeleaza functia
+          fill_area(..) pe portiunea determinata de x,y si size, altfel,
+          se apeleaza functia de reconstructie pentru fiecare dintre fii
+          arborelui.
+     Image reconstruct(Tree comp, int lenght)
+           Returneaza imaginea ponind de la arborele de compresie.
+           Prima oara creeaza antetul cu ajutorul datelor.
+           Apoi aloca matricea in care este stocata imaginea si
+          apeleaza functia
+          apelata precedent.
+
+***Functii specifice rezolvarii cerintelor***
+     void task1(int tol, char *in_file, char *out_file)
+           Functia citeste imaginea folosind read_ppm.
+           Apoi realizeaza compresia in variabila comp prim apelarea functiei
+          compress(..).
+           Urmeaza afisarile datelor cerute:
+                Pentru determinarea inaltimii arborelui se apeleaza height(..)
+                Pentru numarul de blocuri se determina numarul de frunze
+               al arborelui(leaf_number(..))
+                Iar pentru a detrmina lungimea celui mai mare bloc se apeleaza
+               closest_leaf(..), valoarea a -1 fiind pusa in in diff.
+                Acesta reprezinta numarul minim de ori de care a fost
+               impartita imaginea in sferturi.
+                Deci blocul  maxim este img.h/2^div
+                2^div este calculat folsind operatii pe bit: 1<<div.
+          Apoi se elibereaza memoria alocata.
+     void task2(int tol, char *in_file, char *out_file)
+           Functia citeste imaginea folsind read_ppm, apoi aplica functia
+          compress pentru a rezulta arborele comp.
+           In fnal, este afisat comp folosind BFS_print(..) in fisier binar.
+           Se elibereaza memoria.
+     void task3(char *in_file, char *out_file)
+           Se citeste arborele de compresie folosind BFS_read(..).
+           Apoi se reconstruieste imaginea(reconstruct(...)) pornind de la
+          arborele citit in img.
+           Se afiseaza imaginea in fisier binar.
+           Se elibereaza memoria.
+
+***In main:***
+      Pentru primele 2 cerinte, este convertit al doilea argument din string in
+     numar(tol) folosind sscanf. Apoi se trimite ca argument impreuna cu
+     argumentele 3 si 4 ca fisiere de input/output.
+      Pentru a 3-a cerinta, argumentele 2 si 3 sunt trimise ca
+     fisiere de input/output.
+
+***Rezultat checker local***
+rm: cannot remove 'tests/output/*': No such file or directory
+Cerința 1 - Compresia fisierelor
+Statistici_Test  0 ................................................. PASS
+VALGRIND ........................................................... PASS
+Statistici_Test  1 ................................................. PASS
+VALGRIND ........................................................... PASS
+Statistici_Test  2 ................................................. PASS
+VALGRIND ........................................................... PASS
+Statistici_Test  3 ................................................. PASS
+VALGRIND ........................................................... PASS
+Statistici_Test  4 ................................................. PASS
+VALGRIND ........................................................... PASS
+Statistici_Test  5 ................................................. PASS
+VALGRIND ........................................................... PASS
+Statistici_Test  6 ................................................. PASS
+VALGRIND ........................................................... PASS
+Statistici_Test  7 ................................................. PASS
+VALGRIND ........................................................... PASS
+Statistici_Test  8 ................................................. PASS
+VALGRIND ........................................................... PASS
+Statistici_Test  9 ................................................. PASS
+VALGRIND ........................................................... PASS
+Statistici_Test 10 ................................................. PASS
+Statistici_Test 11 ................................................. PASS
+Statistici_Test 12 ................................................. PASS
+Statistici_Test 13 ................................................. PASS
+Statistici_Test 14 ................................................. PASS
+Statistici_Test 15 ................................................. PASS
+Statistici_Test 16 ................................................. PASS
+Statistici_Test 17 ................................................. PASS
+Statistici_Test 18 ................................................. PASS
+Statistici_Test 19 ................................................. PASS
+Cerința 2 - Compresia fișierelor
+Compresia_Test  0 .................................................. PASS
+VALGRIND ........................................................... PASS
+Compresia_Test  1 .................................................. PASS
+VALGRIND ........................................................... PASS
+Compresia_Test  2 .................................................. PASS
+VALGRIND ........................................................... PASS
+Compresia_Test  3 .................................................. PASS
+VALGRIND ........................................................... PASS
+Compresia_Test  4 .................................................. PASS
+VALGRIND ........................................................... PASS
+Compresia_Test  5 .................................................. PASS
+VALGRIND ........................................................... PASS
+Compresia_Test  6 .................................................. PASS
+VALGRIND ........................................................... PASS
+Compresia_Test  7 .................................................. PASS
+VALGRIND ........................................................... PASS
+Compresia_Test  8 .................................................. PASS
+VALGRIND ........................................................... PASS
+Compresia_Test  9 .................................................. PASS
+VALGRIND ........................................................... PASS
+Compresia_Test 10 .................................................. PASS
+Compresia_Test 11 .................................................. PASS
+Compresia_Test 12 .................................................. PASS
+Compresia_Test 13 .................................................. PASS
+Compresia_Test 14 .................................................. PASS
+Compresia_Test 15 .................................................. PASS
+Compresia_Test 16 .................................................. PASS
+Compresia_Test 17 .................................................. PASS
+Compresia_Test 18 .................................................. PASS
+Compresia_Test 19 .................................................. PASS
+Cerința 3 - Decompresia fișierelor
+Decompresia_Test  0 ................................................ PASS
+VALGRIND ........................................................... PASS
+Decompresia_Test  1 ................................................ PASS
+VALGRIND ........................................................... PASS
+Decompresia_Test  2 ................................................ PASS
+VALGRIND ........................................................... PASS
+Decompresia_Test  3 ................................................ PASS
+VALGRIND ........................................................... PASS
+Decompresia_Test  4 ................................................ PASS
+VALGRIND ........................................................... PASS
+Decompresia_Test  5 ................................................ PASS
+VALGRIND ........................................................... PASS
+Decompresia_Test  6 ................................................ PASS
+VALGRIND ........................................................... PASS
+Decompresia_Test  7 ................................................ PASS
+VALGRIND ........................................................... PASS
+Decompresia_Test  8 ................................................ PASS
+VALGRIND ........................................................... PASS
+Decompresia_Test  9 ................................................ PASS
+VALGRIND ........................................................... PASS
+Decompresia_Test 10 ................................................ PASS
+Decompresia_Test 11 ................................................ PASS
+Decompresia_Test 12 ................................................ PASS
+Decompresia_Test 13 ................................................ PASS
+Decompresia_Test 14 ................................................ PASS
+Decompresia_Test 15 ................................................ PASS
+Decompresia_Test 16 ................................................ PASS
+Decompresia_Test 17 ................................................ PASS
+Decompresia_Test 18 ................................................ PASS
+Decompresia_Test 19 ................................................ PASS
+Cerinta 1 : 20
+Cerinta 2 : 30.0
+Cerinta 3 : 30.0
+Total     : 80.0
+Bonus     : 20.0
+Felicitari! Ai punctajul maxim: 80p! :)
